@@ -80,7 +80,7 @@ class GatherDataEmergencyCtrl
               exit();
           }
           $row = mysqli_fetch_array($result, MYSQLI_NUM);
-          var_dump($sql);
+          //var_dump($sql);
 
           $sql = "INSERT INTO `tbl_emergency_data`(`EMERGENCY_CODE`, `SD`, `SGG`, `EMERGENCY_TEXT`, `GEN_YMDHMS`) VALUES ('001', '".$key[3]."', '???', '".$key[2]."', '".$key[1]."');";
           //var_dump($sql);
