@@ -1,10 +1,11 @@
 <?php
 
-$dsn = "mysql:host=192.168.0.17:3306";
-// $user = "root";
-// $passwd = "Q1w2e3r4!@<>";
-$user = "super";
-$passwd = "password";
+$dsn = "mysql:host=localhost";
+$user = "root";
+$passwd = "";
+//$dsn = "mysql:host=192.168.0.17:3306";
+//$user = "super";
+//$passwd = "password";
 
 try {
   $pdo = new PDO($dsn, $user, $passwd);

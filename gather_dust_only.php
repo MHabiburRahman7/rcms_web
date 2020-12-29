@@ -1,26 +1,34 @@
 <?php
-
 include_once ('config/database.php');
+//include_once ('header.php');
 
-/**
- *
- */
-class DustData
-{
+class DustClass{
 
-  public function getCurrTime(){
-    $api_url = "http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getCtprvnMesureLIst?itemCode=PM10&dataGubun=HOUR&searchCondition=MONTH&pageNo=1&numOfRows=".$req_data."&ServiceKey=5rngHQO75rpCVULQ4UNMIXpRWSMzzTduA%2F2N47nrYL3Tc4sHHCAJ3F0k61NC05iQLdrR20%2Bur41a9nEPmpVhtQ%3D%3D";
+  public function getDustName(){
+    //fetch the table names
+    $db = new Database();
+    $conn = $db->getConnection();
 
-    $xmlstring = simplexml_load_file($api_url);
+    //$sql = "SELECT * FROM tbl_dust_data;";
+    //more readable
+    $sql ="SELECT `NAME_HGL`, `NAME_DUST` FROM `province`";
 
-    //$xml = simplexml_load_string($xmlstring);
-    $json = json_encode($xmlstring);
-    $array = json_decode($json,TRUE);
+    $result = mysqli_query($conn, $sql);
+    if (!$result) {
+        printf("Error: %s\n", mysqli_error($this->conn));
+        exit();
+    }
 
-    //reformat the time
-    $array['body']['items']['item']['0']['dataTime'] = str_replace('-', '.', $array['body']['items']['item']['0']['dataTime']);
-    $array['body']['items']['item']['0']['dataTime'] = str_replace(' ', '.', $array['body']['items']['item']['0']['dataTime']);
-    return($array['body']['items']['item']['0']['dataTime']);
+    $row = $result->fetch_assoc();
+    if($row > 0){
+      while($row = $result->fetch_assoc())
+       {
+           $data[] = $row;
+       }
+    }
+    mysqli_close($conn);
+
+    return($data);
   }
 
   public function NeedUpdate($first_data){
@@ -77,47 +85,18 @@ class DustData
       //var_dump($row);
 
       $sql ="INSERT INTO `tbl_dust_data`(`IDX_DATETIME`, `ITEMCODE`, `LOCATION`, `VALUE_1`)
-      VALUES ('".$theData['dataTime']."','PM10','".$row['IDX']."',".$theData[$i]['val'].")";
+      VALUES ('".$theData['dataTime']."','PM10','".$row['IDX']."','".$theData[$i]['val']."')";
       //var_dump($sql);
 
       $result = mysqli_query($conn, $sql);
       if (!$result) {
-          printf("Error: %s\n", mysqli_error($this->conn));
+          printf("Error: %s\n", mysqli_error(conn));
           exit();
       }
       //var_dump($sql);
     }
 
     mysqli_close($conn);
-  }
-
-  public function getDustName(){
-    //fetch the table names
-    $db = new Database();
-    $conn = $db->getConnection();
-
-    //$sql = "SELECT * FROM tbl_dust_data;";
-    //more readable
-    $sql ="SELECT `NAME_HGL`, `NAME_DUST` FROM `province`";
-
-    $result = mysqli_query($conn, $sql);
-    if (!$result) {
-        printf("Error: %s\n", mysqli_error($this->conn));
-        exit();
-    }
-
-    $row = $result->fetch_assoc();
-    if($row > 0){
-      while($row = $result->fetch_assoc())
-       {
-           $data[] = $row;
-       }
-    }
-    //$row = array_pop($row[]);
-    //print_r($row);
-    mysqli_close($conn);
-
-    return($data);
   }
 
   public function getSingleProvince($single_province_name){
@@ -147,23 +126,30 @@ class DustData
 
     return ($res);
   }
-
-  public function getResult($req_data)
-  {
-    //print_r($req_data);
-    $api_url = "http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getCtprvnMesureLIst?itemCode=PM10&dataGubun=HOUR&searchCondition=MONTH&pageNo=1&numOfRows=".$req_data."&ServiceKey=5rngHQO75rpCVULQ4UNMIXpRWSMzzTduA%2F2N47nrYL3Tc4sHHCAJ3F0k61NC05iQLdrR20%2Bur41a9nEPmpVhtQ%3D%3D&ver=1.3";
-
-    $xmlstring = simplexml_load_file($api_url);
-
-    //$xml = simplexml_load_string($xmlstring);
-    $json = json_encode($xmlstring);
-    $array = json_decode($json,TRUE);
-
-    //single time
-    $res = $array['body']['items']['item']['0'];
-
-    return ($res);
-  }
 }
+
+$api = new DustClass();
+$province_names = $api->getDustName();
+
+//print_r($province_names);
+
+//$i=0;
+//$res[$province_names[$i]['NAME_HGL']] = $api->getSingleProvince($province_names[$i]);
+//$api->insertDustDataNew($res[$province_names[$i]['NAME_HGL']], $province_names[$i]['NAME_HGL']);
+if($api->NeedUpdate($province_names[0])){
+  //fetch data
+  for($i=0; $i<sizeof($province_names)-1; $i++){
+    //$temp = $province_names[$i];
+    //fetch
+    $res[$province_names[$i]['NAME_HGL']] = $api->getSingleProvince($province_names[$i]);
+    $api->insertDustDataNew($res[$province_names[$i]['NAME_HGL']], $province_names[$i]['NAME_HGL']);
+    //sleep(1.2);
+  }
+  print_r("Data updated");
+}else{
+  print_r("Latest data already exist");
+}
+
+//print_r($res);
 
  ?>
