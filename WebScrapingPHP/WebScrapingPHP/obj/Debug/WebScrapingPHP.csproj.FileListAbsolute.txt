@@ -1,0 +1,10 @@
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\bin\Debug\WebScrapingPHP.exe.config
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\bin\Debug\WebScrapingPHP.exe
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\bin\Debug\WebScrapingPHP.pdb
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\obj\Debug\WebScrapingPHP.csprojAssemblyReference.cache
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\obj\Debug\WebScrapingPHP.Form1.resources
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\obj\Debug\WebScrapingPHP.Properties.Resources.resources
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\obj\Debug\WebScrapingPHP.csproj.GenerateResource.cache
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\obj\Debug\WebScrapingPHP.csproj.CoreCompileInputs.cache
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\obj\Debug\WebScrapingPHP.exe
+C:\Users\USER\source\repos\WebScrapingPHP\WebScrapingPHP\obj\Debug\WebScrapingPHP.pdb
