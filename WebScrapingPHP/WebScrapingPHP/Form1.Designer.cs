@@ -97,6 +97,7 @@
             this.button_show.TabIndex = 5;
             this.button_show.Text = "Show Data";
             this.button_show.UseVisualStyleBackColor = true;
+            this.button_show.Click += new System.EventHandler(this.button_show_Click);
             // 
             // textBox_weather
             // 

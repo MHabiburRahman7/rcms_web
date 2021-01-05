@@ -22,6 +22,9 @@ namespace WebScrapingPHP
         public int waiting_weather, waiting_dust, waiting_emergency;
         public string key = "5rngHQO75rpCVULQ4UNMIXpRWSMzzTduA%2F2N47nrYL3Tc4sHHCAJ3F0k61NC05iQLdrR20%2Bur41a9nEPmpVhtQ%3D%3D&";
 
+        public List<int> dust_mins = new List<int>();
+        public List<int> weather_mins = new List<int>();
+
         public Form1()
         {
             InitializeComponent();
@@ -47,6 +50,19 @@ namespace WebScrapingPHP
             //reader.Close();
         }
 
+        private bool timeToDownload(List<int> minutes)
+        {
+            int curr_min = Int32.Parse(DateTime.Now.ToString("mm"));
+
+            foreach (var item in minutes)
+            {
+                if (item == curr_min)
+                    return true;
+            }
+
+            return false;
+        }
+
         private void button_dust_Click(object sender, EventArgs e)
         {
             //old function which call php
@@ -65,42 +81,51 @@ namespace WebScrapingPHP
             downloadEmergencyData();
         }
 
-        private void button_start_Click(object sender, EventArgs e)
+        private async void button_start_Click(object sender, EventArgs e)
         {
             simulation_stats = "start";
-            waiting_dust = Int32.Parse(textBox_dust.Text);
-            waiting_emergency = Int32.Parse(textBox_emergency.Text);
-            waiting_weather = Int32.Parse(textBox_weather.Text);
+
+            //weather and dust is based on minutes, can be more than one min
+            List<string> temp = new List<string>();
+            if (textBox_dust.Text != "")
+            {
+                temp = textBox_dust.Text.Split(',').ToList();
+                foreach (var item in temp)
+                {
+                    dust_mins.Add(Int32.Parse(item));
+                }
+                temp = new List<string>();
+            }
+
+            if (textBox_weather.Text != "")
+            {
+                temp = textBox_weather.Text.Split(',').ToList();
+                foreach (var item in temp)
+                {
+                    weather_mins.Add(Int32.Parse(item));
+                }
+                temp = new List<string>();
+            }
+
+            //emergency is based on second
+            if(textBox_emergency.Text != null)
+            {
+                waiting_emergency = Int32.Parse(textBox_emergency.Text) * 1000;
+            }
+
+            //if(textBox_dust.Text != "")
+            //    waiting_dust = Int32.Parse(textBox_dust.Text);
+            //if(textBox_emergency.Text != "")
+            //    waiting_emergency = Int32.Parse(textBox_emergency.Text);
+            //if(textBox_weather.Text != "")
+            //    waiting_weather = Int32.Parse(textBox_weather.Text);
+
+            //15 min delay
+            waiting_dust = 61000;
+            waiting_weather = 61000;
 
             //simulate();
-        }
-
-        private void callemergency()
-        {
-            main_box.Text = "Start collecting Emergency Data~\n";
-            var webClient = new WebClient();
-            string reply = webClient.DownloadString("http://localhost/rcms_web/gather_emergency_only.php");
-
-            main_box.AppendText(reply);
-        }
-
-        private void calldust()
-        {
-            main_box.Text = "Start collecting Dust Data~\n";
-            var webClient = new WebClient();
-            string reply = webClient.DownloadString("http://localhost/rcms_web/gather_dust_only.php");
-
-            main_box.AppendText(reply);
-        }
-
-        private void callweather()
-        {
-            main_box.Text = "Start collecting Weather Data~\n";
-
-            var webClient = new WebClient();
-            string reply = webClient.DownloadString("http://localhost/rcms_web/gather_weather_only.php");
-
-            main_box.AppendText(reply);
+            startSimulation();
         }
 
         public async Task<string> RunAsync()
@@ -111,11 +136,70 @@ namespace WebScrapingPHP
 
         private async void button_stop_Click(object sender, EventArgs e)
         {
-            string result = await RunAsync();
 
-            main_box.AppendText(result);
-            //simulation_stats = "stop";
+            //string result = await RunAsync();
+
+            //main_box.AppendText(result);
+            simulation_stats = "stop";
+            //startSimulation();
             //downloadDust();
+
+            //15 min delay
+            //15 min delay
+            waiting_dust = 0;
+            waiting_weather = 0;
+        }
+
+        private async void startSimulation()
+        {
+            while (simulation_stats == "start")
+            {
+                int res = 0;
+
+                bool time_to_download_weather = false, time_to_download_dust = false;
+                //validation
+                if (timeToDownload(dust_mins))
+                    time_to_download_dust = true;
+                if (timeToDownload(weather_mins))
+                    time_to_download_weather = true;
+
+                //downloading
+                if (time_to_download_dust)
+                {
+                    string timeLog = "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "]\n";
+                    main_box.AppendText(timeLog);
+                    Console.WriteLine(timeLog);
+
+                    res = await downloadDust();
+
+
+                    if (res == 1)
+                        main_box.AppendText("Await done, start to check dust data\n");
+                }
+
+                //
+                if (time_to_download_weather)
+                {
+                    string timeLog = "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "]\n";
+                    main_box.AppendText(timeLog);
+                    Console.WriteLine(timeLog);
+
+                    res = await downloadWeather();
+
+                    if (res == 1)
+                        main_box.AppendText("Await done, start to check weather data\n");
+                }
+
+                //string result = await RunAsync();
+                //int weatherRes = await downloadWeather();
+                //if(weatherRes == 1)
+                //    main_box.AppendText("Weather data done");
+
+                
+                int emergencyRes = await downloadEmergencyData();
+                if (emergencyRes == 1)
+                    main_box.AppendText("Start checking emergency data\n");
+            }
         }
 
         private bool insertEmergencyData(List<string> message_inp)
@@ -158,8 +242,12 @@ namespace WebScrapingPHP
             return true;
         }
 
-        private void downloadEmergencyData()
+        private async Task<int> downloadEmergencyData()
         {
+            string timeLog = "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "]\n";
+            main_box.AppendText(timeLog);
+            Console.WriteLine(timeLog);
+
             main_box.AppendText("Collecting Emergency Messages Data~\n");
             Console.WriteLine("Collecting Emergency Messages Data");
 
@@ -195,8 +283,16 @@ namespace WebScrapingPHP
                         if (isLocation)
                         {
                             string[] smaller_temp = reader.Value.ToString().Split(' ');
-                            temp.Add(smaller_temp[0]);
-                            temp.Add(smaller_temp[1]);
+                            if(smaller_temp.Count<string>() > 1) {
+                                temp.Add(smaller_temp[0]);
+                                temp.Add(smaller_temp[1]);
+
+                            }
+                            else
+                            {
+                                temp.Add(smaller_temp[0]);
+                                temp.Add(smaller_temp[0]);
+                            }
                             isLocation = false;
                         }
                         if (isMsg)
@@ -225,26 +321,79 @@ namespace WebScrapingPHP
             //x data is updated
             main_box.AppendText(count+" number of Emergency Messages Data updated\n");
             Console.WriteLine(count+" number of Emergency Messages Data updated");
+
+            await Task.Delay(waiting_emergency);
+            return 1;
         }
 
         private List<string> getWeatherDateTime()
         {
+            //validify with the existing data on api
+            string year = DateTime.Now.ToString("yyyy");
+            string month = DateTime.Now.ToString("MM");
+            string date = DateTime.Now.ToString("dd");
+            string date_inp = year+month+date;
+            string hr = DateTime.Now.ToString("HH");
+            string time_inp = hr+"00";
+            DateTime workingDateTime = new DateTime(Int32.Parse(year), Int32.Parse(month), Int32.Parse(date), Int32.Parse(hr), 0,0,0);
+
+            
+            String URLString = "http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtNcst?serviceKey=" + key + "&numOfRows=10&pageNo=1&base_date=" + date_inp + "&base_time=" + time_inp + "&nx=60&ny=127";
+            XmlTextReader reader = new XmlTextReader(URLString);
+
+            //Hum is REH || temp is T1H
+            bool usePrevHour = false, checkResponse = false;
+
+            List<List<string>> res = new List<List<string>>();
+            List<string> temp = new List<string>();
+
+            //REH = itt -> 1 || T1H = itt -> 3
+            while (reader.Read())
+            {
+                switch (reader.NodeType)
+                {
+                    case XmlNodeType.Element:
+                        if(reader.Name == "resultCode")
+                        {
+                            checkResponse = true;
+                        }
+                        break;
+                    case XmlNodeType.Text:
+                        if (checkResponse)
+                        {
+                            if (reader.Value.ToString() == "00")
+                                usePrevHour = false;
+                            else
+                                usePrevHour = true;
+                            checkResponse = false;
+                        }
+                        break;
+                    
+                    default:
+                        break;
+                }
+            }
+
+            if (usePrevHour)
+            {
+                workingDateTime = workingDateTime.AddHours(-1);
+            }
+
             //sql format - date - time now - time prev
-            List<string> res = new List<string>();
-            string temp = DateTime.Now.ToString("yyyy-MM-dd HH:00");
-            res.Add(temp);
+            List<string> finalRes = new List<string>();
+            //string temporary = DateTime.Now.ToString("yyyy-MM-dd HH:00");
+            finalRes.Add(workingDateTime.ToString("yyyy-MM-dd HH:00"));
 
+            //temp = DateTime.Now.ToString("yyyyMMdd");
+            finalRes.Add(workingDateTime.ToString("yyyyMMdd"));
 
-            temp = DateTime.Now.ToString("yyyyMMdd");
-            res.Add(temp);
+            //temp = DateTime.Now.ToString("HH00");
+            finalRes.Add(workingDateTime.ToString("HH00"));
 
-            temp = DateTime.Now.ToString("HH00");
-            res.Add(temp);
+            //temp = (DateTime.Now.Hour - 1).ToString()+"00";
+           // res.Add(temp);
 
-            temp = (DateTime.Now.Hour - 1).ToString()+"00";
-            res.Add(temp);
-
-            return res;
+            return finalRes;
         }
 
         private void insertWeatherData(string gridx, string gridy, string time_sql_format, List<string> hum_n_temp )
@@ -278,110 +427,19 @@ namespace WebScrapingPHP
             }
         }
 
-        private List<string> getSingleGridWeatherData(string gridx, string gridy, string date_inp, string time_inp, string time_min1)
+        private List<string> getSingleGridWeatherData(string gridx, string gridy, string date_inp, string time_inp)
         {
             //String URLString = "http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtNcst?serviceKey="+key+"&numOfRows=10&pageNo=1&base_date="+date_inp+"&base_time="+time_inp+"&nx="+gridx+"&ny="+gridy+"";
-            String URLString = "http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtNcst?serviceKey=" + key + "&numOfRows=10&pageNo=1&base_date=" + date_inp + "&base_time=" + time_min1 + "&nx=" + gridx + "&ny=" + gridy + "";
+            String URLString = "http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtNcst?serviceKey=" + key + "&numOfRows=10&pageNo=1&base_date=" + date_inp + "&base_time=" + time_inp + "&nx=" + gridx + "&ny=" + gridy + "";
             XmlTextReader reader = new XmlTextReader(URLString);
 
             //Hum is REH || temp is T1H
-            bool isHumidity = false, isTemp = false, checkElement = false, checkVal = false ;
-            bool prevHour = false, checkCode = false;
+            bool checkVal = false, checkCode = false;
+            //bool prevHour = false;
 
             List<List<string>> res = new List<List<string>>();
             List<string> temp = new List<string>();
 
-            //while (reader.Read())
-            //{
-            //    switch (reader.NodeType)
-            //    {
-            //        case XmlNodeType.Element:
-            //            Console.WriteLine("Start Element {0}", reader.Name);
-            //            break;
-            //        case XmlNodeType.Text:
-            //            Console.WriteLine("Text Node: {0}",
-            //                     reader.Value.ToString());
-            //            break;
-            //        case XmlNodeType.EndElement:
-            //            Console.WriteLine("End Element {0}", reader.Name);
-            //            break;
-            //        default:
-            //            Console.WriteLine("Other node {0} with value {1}",
-            //                            reader.NodeType, reader.Value);
-            //            break;
-            //    }
-            //}
-
-            //while (reader.Read())
-            //{                    
-            //    switch (reader.NodeType)
-            //    {
-            //        case XmlNodeType.Element: // The node is an element.
-
-            //            if (reader.Name == "resultCode")
-            //            {
-            //                //int c = 10;
-            //                checkCode = true;
-            //            }
-
-            //            if (reader.Name == "category")
-            //            {
-            //                checkElement = true;
-            //            }
-            //            else if (reader.Name == "obsrValue")
-            //            {
-            //                checkVal = true;
-            //            }
-
-            //            break;
-            //        case XmlNodeType.Text: //Display the text in each element.
-            //            if (checkElement)
-            //            {
-            //                if (reader.Value.ToString() == "REH")
-            //                {
-            //                    isHumidity = true;
-            //                    break;
-            //                }
-            //                else if (reader.Value.ToString() == "T1H")
-            //                {
-            //                    isTemp = true;
-            //                    break;
-            //                }
-            //            }
-
-            //            if (checkVal)
-            //            {
-            //                if (isHumidity)
-            //                {
-            //                    temp.Add(reader.Value.ToString());
-            //                    isTemp = false;
-            //                    checkVal = false;
-            //                    checkElement = false;
-            //                }
-            //                else if (isTemp)
-            //                {
-            //                    temp.Add(reader.Value.ToString());
-            //                    isHumidity = false;
-            //                    checkVal = false;
-            //                    checkElement = false;
-
-            //                    res.Add(temp);
-            //                    temp = new List<string>();
-            //                }
-            //            }
-
-            //            if (checkCode)
-            //            {
-            //                if(reader.Value.ToString() == "03")
-            //                {
-            //                    prevHour = true;
-            //                    break;
-            //                }
-            //            }
-
-            //            break;
-            //    }
-            //}
 
             int itt = 0;
             checkVal = false;
@@ -399,8 +457,20 @@ namespace WebScrapingPHP
                         {
                             checkVal = true;
                         }
+                        if(reader.Name == "resultCode")
+                        {
+                            checkCode = true;
+                        }
                         break;
                     case XmlNodeType.Text:
+                        if (checkCode)
+                        {
+                            //if (reader.Value.ToString() != "00")
+                            //{
+                            //    prevHour = true;
+                            //}
+                            checkCode = false;
+                        }
                         if (checkVal)
                         {
                             temp.Add(reader.Value.ToString());
@@ -417,10 +487,53 @@ namespace WebScrapingPHP
                 }
             }
 
+            //if (prevHour)
+            //{
+            //    URLString = "http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtNcst?serviceKey=" + key + "&numOfRows=10&pageNo=1&base_date=" + date_inp + "&base_time=" + time_min1 + "&nx=" + gridx + "&ny=" + gridy + "";
+            //    reader = new XmlTextReader(URLString);
+
+            //    res = new List<List<string>>();
+            //    temp = new List<string>();
+
+            //    itt = 0;
+            //    checkVal = false;
+            //    //REH = itt -> 1 || T1H = itt -> 3
+            //    while (reader.Read())
+            //    {
+            //        switch (reader.NodeType)
+            //        {
+            //            case XmlNodeType.Element:
+            //                if (reader.Name == "item")
+            //                {
+            //                    itt++;
+            //                }
+            //                if (reader.Name == "obsrValue" && (itt == 2 || itt == 4))
+            //                {
+            //                    checkVal = true;
+            //                }
+            //                break;
+            //            case XmlNodeType.Text:
+            //                if (checkVal)
+            //                {
+            //                    temp.Add(reader.Value.ToString());
+            //                    checkVal = false;
+            //                }
+
+            //                if (itt == 4)
+            //                {
+            //                    if (res.Count() == 0)
+            //                        res.Add(temp);
+            //                }
+
+            //                break;
+            //        }
+            //    }
+            //}
+
             return res[0];
         }
 
-        private void downloadWeather()
+        private async Task<int> downloadWeather()
         {
             main_box.AppendText("Collecting Weather Data~\n");
             Console.WriteLine("Collecting Weather Data");
@@ -474,7 +587,7 @@ namespace WebScrapingPHP
                 foreach (var item in x_y_list)
                 {
                     //getData for each lat long
-                    List<string> temp_data = getSingleGridWeatherData(item[0], item[1], curr_date[1], curr_date[2], curr_date[3]);
+                    List<string> temp_data = getSingleGridWeatherData(item[0], item[1], curr_date[1], curr_date[2]);
                     //insert
                     insertWeatherData(item[0], item[1], curr_date[0], temp_data);
 
@@ -497,6 +610,14 @@ namespace WebScrapingPHP
                 main_box.AppendText("Data from " + curr_date[0] + " is Already exist\n");
                 Console.WriteLine("Data from " + curr_date[0] + " is Already exist");
             }
+
+            await Task.Delay(waiting_weather);
+            return 1;
+        }
+
+        private void button_show_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("http://127.0.0.1/phpmyadmin");
         }
 
         public List<List<string>> downloadTheDust(string inp)
@@ -542,7 +663,22 @@ namespace WebScrapingPHP
                             isStationName = false;
                         }else if (isDataTime)
                         {
-                            temp.Add(reader.Value.ToString());
+                            if (reader.Value.ToString().Contains("24:00"))
+                            {
+                                string[] dateandtime = reader.Value.ToString().Split(' ');
+
+                                string[] date = dateandtime[0].Split('-');
+                                string[] time = dateandtime[1].Split(':');
+
+                                //convert to epoch
+                                DateTime start = new DateTime(Int32.Parse(date[0]), Int32.Parse(date[1]), Int32.Parse(date[2]), 0, 0, 0, 0);
+
+                                string s = start.AddDays(+1).ToString("yyyy-MM-dd HH:mm");
+
+                                temp.Add(s);
+                            }
+                            else
+                                temp.Add(reader.Value.ToString());
                             //Console.WriteLine(reader.Value);
                             isDataTime = false;
                         }else if (isPm10)
@@ -565,7 +701,7 @@ namespace WebScrapingPHP
             //main_box.AppendText(dataTime);
         }
 
-        private void downloadDust()
+        private async Task<int> downloadDust()
         {
             main_box.AppendText("Collecting Dust Data~\n");
             Console.WriteLine("Collecting Dust Data");
@@ -625,7 +761,7 @@ namespace WebScrapingPHP
             {
                 main_box.AppendText("Data of " + finalRes[0][0][1] + " already exist\n");
                 Console.WriteLine("Data of " + finalRes[0][0][1] + " already exist");
-                return;
+                return 1;
             }
 
             main_box.AppendText("Downloaded data from " + finalRes[0][0][1] + " and inserting to DB\n");
@@ -698,6 +834,9 @@ namespace WebScrapingPHP
 
             main_box.AppendText("Insertion data on " + finalRes[0][0][1] + " Is Done \n");
             Console.WriteLine("Insertion data on " + finalRes[0][0][1] + " Is Done");
+
+            await Task.Delay(waiting_dust);
+            return 1;
         }
 
 
