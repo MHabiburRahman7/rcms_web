@@ -530,6 +530,16 @@ namespace WebScrapingPHP
             //    }
             //}
 
+            if(res.Count() > 0)
+                return res[0];
+            else
+            {
+                temp.Add("");
+                res.Add(temp);
+                return res[0];
+            }
+                
+
             return res[0];
         }
 
@@ -589,7 +599,8 @@ namespace WebScrapingPHP
                     //getData for each lat long
                     List<string> temp_data = getSingleGridWeatherData(item[0], item[1], curr_date[1], curr_date[2]);
                     //insert
-                    insertWeatherData(item[0], item[1], curr_date[0], temp_data);
+                    if(temp_data.Count() > 1)
+                        insertWeatherData(item[0], item[1], curr_date[0], temp_data);
 
                     if(count %400 == 0 && shouldPrint)
                     {
