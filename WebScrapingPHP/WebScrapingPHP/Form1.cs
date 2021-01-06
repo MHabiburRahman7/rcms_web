@@ -32,22 +32,8 @@ namespace WebScrapingPHP
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //old php calling
-            //callweather();
-
             //new method
             downloadWeather();
-
-            //var client = new WebClient();
-
-            //client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
-
-            //Stream data = client.OpenRead("Hello world");
-            //StreamReader reader = new StreamReader(data);
-            //string s = reader.ReadToEnd();
-            //Console.WriteLine(s);
-            //data.Close();
-            //reader.Close();
         }
 
         private bool timeToDownload(List<int> minutes)
@@ -65,18 +51,12 @@ namespace WebScrapingPHP
 
         private void button_dust_Click(object sender, EventArgs e)
         {
-            //old function which call php
-            //calldust();
-
             //new function full from c#
             downloadDust();
         }
 
         private void _emergency_Click(object sender, EventArgs e)
         {
-            //old php calling
-            //callemergency();
-
             //new method
             downloadEmergencyData();
         }
@@ -113,14 +93,7 @@ namespace WebScrapingPHP
                 waiting_emergency = Int32.Parse(textBox_emergency.Text) * 1000;
             }
 
-            //if(textBox_dust.Text != "")
-            //    waiting_dust = Int32.Parse(textBox_dust.Text);
-            //if(textBox_emergency.Text != "")
-            //    waiting_emergency = Int32.Parse(textBox_emergency.Text);
-            //if(textBox_weather.Text != "")
-            //    waiting_weather = Int32.Parse(textBox_weather.Text);
-
-            //15 min delay
+            //1 min delay
             waiting_dust = 61000;
             waiting_weather = 61000;
 
@@ -137,15 +110,10 @@ namespace WebScrapingPHP
         private async void button_stop_Click(object sender, EventArgs e)
         {
 
-            //string result = await RunAsync();
-
-            //main_box.AppendText(result);
             simulation_stats = "stop";
-            //startSimulation();
-            //downloadDust();
 
-            //15 min delay
-            //15 min delay
+            //0 min delay
+            //0 min delay
             waiting_dust = 0;
             waiting_weather = 0;
         }
@@ -189,13 +157,7 @@ namespace WebScrapingPHP
                     if (res == 1)
                         main_box.AppendText("Await done, start to check weather data\n");
                 }
-
-                //string result = await RunAsync();
-                //int weatherRes = await downloadWeather();
-                //if(weatherRes == 1)
-                //    main_box.AppendText("Weather data done");
-
-                
+                                
                 int emergencyRes = await downloadEmergencyData();
                 if (emergencyRes == 1)
                     main_box.AppendText("Start checking emergency data\n");
@@ -487,49 +449,6 @@ namespace WebScrapingPHP
                 }
             }
 
-            //if (prevHour)
-            //{
-            //    URLString = "http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtNcst?serviceKey=" + key + "&numOfRows=10&pageNo=1&base_date=" + date_inp + "&base_time=" + time_min1 + "&nx=" + gridx + "&ny=" + gridy + "";
-            //    reader = new XmlTextReader(URLString);
-
-            //    res = new List<List<string>>();
-            //    temp = new List<string>();
-
-            //    itt = 0;
-            //    checkVal = false;
-            //    //REH = itt -> 1 || T1H = itt -> 3
-            //    while (reader.Read())
-            //    {
-            //        switch (reader.NodeType)
-            //        {
-            //            case XmlNodeType.Element:
-            //                if (reader.Name == "item")
-            //                {
-            //                    itt++;
-            //                }
-            //                if (reader.Name == "obsrValue" && (itt == 2 || itt == 4))
-            //                {
-            //                    checkVal = true;
-            //                }
-            //                break;
-            //            case XmlNodeType.Text:
-            //                if (checkVal)
-            //                {
-            //                    temp.Add(reader.Value.ToString());
-            //                    checkVal = false;
-            //                }
-
-            //                if (itt == 4)
-            //                {
-            //                    if (res.Count() == 0)
-            //                        res.Add(temp);
-            //                }
-
-            //                break;
-            //        }
-            //    }
-            //}
-
             if(res.Count() > 0)
                 return res[0];
             else
@@ -705,11 +624,6 @@ namespace WebScrapingPHP
 
 
             return res;
-            //string xml = new WebClient().DownloadString("http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?sidoName=" + "서울" +"&pageNo=1&numOfRows=200&ServiceKey=5rngHQO75rpCVULQ4UNMIXpRWSMzzTduA%2F2N47nrYL3Tc4sHHCAJ3F0k61NC05iQLdrR20%2Bur41a9nEPmpVhtQ%3D%3D&&ver=1.3");
-            //XDocument doc = XDocument.Parse(xml);
-
-            //var dataTime = doc.Descendants("body").Elements("items").Elements("item").ToString();
-            //main_box.AppendText(dataTime);
         }
 
         private async Task<int> downloadDust()
@@ -850,15 +764,13 @@ namespace WebScrapingPHP
             return 1;
         }
 
+        private void main_box_TextChanged(object sender, EventArgs e)
+        {
+            // set the current caret position to the end
+            main_box.SelectionStart = main_box.Text.Length;
+            // scroll it automatically
+            main_box.ScrollToCaret();
+        }
 
-        //private async void simulate_weather(object sender, RoutedEventArgs e)
-        //{
-        //    while(simulation_stats != "stop")
-        //    {
-        //        label1.Text = "Test";
-        //        await Task.Delay(waiting_weather);
-        //        label1.Text = "";
-        //    }
-        //}
     }
 }

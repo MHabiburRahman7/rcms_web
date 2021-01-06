@@ -58,6 +58,7 @@
             this.main_box.Size = new System.Drawing.Size(327, 362);
             this.main_box.TabIndex = 1;
             this.main_box.Text = "";
+            this.main_box.TextChanged += new System.EventHandler(this.main_box_TextChanged);
             // 
             // button_dust
             // 
@@ -85,7 +86,7 @@
             this.button_start.Name = "button_start";
             this.button_start.Size = new System.Drawing.Size(193, 35);
             this.button_start.TabIndex = 4;
-            this.button_start.Text = "Start Async";
+            this.button_start.Text = "Start";
             this.button_start.UseVisualStyleBackColor = true;
             this.button_start.Click += new System.EventHandler(this.button_start_Click);
             // 
@@ -135,7 +136,7 @@
             this.button_stop.Name = "button_stop";
             this.button_stop.Size = new System.Drawing.Size(193, 35);
             this.button_stop.TabIndex = 10;
-            this.button_stop.Text = "Stop Async";
+            this.button_stop.Text = "Stop";
             this.button_stop.UseVisualStyleBackColor = true;
             this.button_stop.Click += new System.EventHandler(this.button_stop_Click);
             // 
